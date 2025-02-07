@@ -1,0 +1,52 @@
+# Artdink files XOR & lzss0 decompress
+# script for QuickBMS http://quickbms.aluigi.org
+
+get inFolder INPUT_FOLDER
+get discriminator EXTENSION
+set gimCheck "gim"
+set gmoCheck "gmo"
+getdstring magicNum 3
+goto 0
+set encrypted " 3;"
+set compressed "RAI"
+set gimDone "MIG"
+set gmoDone "OMG"
+
+if discriminator == gimCheck || discriminator == gmoCheck
+    if magicNum == encrypted
+        FileXOR "\x72"
+        getdstring magicNum 3
+        goto 0
+    endif
+    if magicNum == compressed
+        comtype lzss0
+        get ZSIZE asize
+        goto 0x18
+        get longfile byte
+        if longfile == 0x00
+            goto 0x1C
+            get SIZE_first int
+            get SIZE_second byte
+        else
+            get SIZE_second int
+            get ignored byte
+            get SIZE_first int
+        endif
+
+        set SIZE long SIZE_first
+        math SIZE << 8
+        math SIZE + SIZE_second
+        math SIZE + 0x10 
+        math ZSIZE - 0x08
+        get NAME FULLNAME
+        String NAME - inFolder
+        goto 0
+        clog NAME 0x08 ZSIZE SIZE
+    elif magicNum == gimDone || magicNum == gmoDone
+        print "This file alredy processed."
+    else
+        print "Not encrypted, compressed, or processed - not sure how you got here?"
+    endif
+else
+    print "Not .gim or .gmo format."
+endif
