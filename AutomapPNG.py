@@ -2,7 +2,13 @@ import bpy
 from pathlib import Path
 import os
 
+mats = bpy.data.materials
+
+
+
 current_directory = bpy.path.abspath("//") 
+parent_directory = os.path.abspath(os.path.join(current_directory, ".."))
+grandparent_directory = os.path.abspath(os.path.join(parent_directory, ".."))
 def has_material(obj):
     """Checks if the given object has any materials assigned."""
     return len(obj.material_slots) > 0
@@ -34,11 +40,21 @@ def remove_after_dot(text):
     return text[:dot_index]
   return text
 
+
+for smoother in mats:
+    smoothed = smoother.name.partition('_')
+    if smoothed[0].isnumeric():
+        smoother.name = smoothed[2]
+for clipper in mats:
+    clipper.name = remove_after_dot(clipper.name)
+
     
 for ob in bpy.context.selected_objects:
     if has_material(ob):
         mat = ob.data.materials[0]
-        matName = remove_after_dot(mat.name[5:])
+        matName = mat.name
+        print(mat.name)
+        print(ob.name)
         # Enable nodes for the material
         mat.use_nodes = True
         nodes = mat.node_tree.nodes
@@ -58,7 +74,7 @@ for ob in bpy.context.selected_objects:
         image_texture.location = (-300, 0)
         
         # Set the image path
-        image_path = search_subfolders(current_directory, matName)
+        image_path = search_subfolders(grandparent_directory, matName)
         if os.path.exists(image_path):
             image_texture.image = bpy.data.images.load(image_path)
 
